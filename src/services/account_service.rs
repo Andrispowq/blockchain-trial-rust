@@ -1,7 +1,7 @@
 use subxt::{OnlineClient, PolkadotConfig};
 use subxt::utils::AccountId32;
 use crate::polkadot;
-use crate::polkadot::assets::storage::types::account::Account;
+use crate::polkadot::system::storage::types::account::Account;
 
 pub struct AccountService {
     api: OnlineClient<PolkadotConfig>,

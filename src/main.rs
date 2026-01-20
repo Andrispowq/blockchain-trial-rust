@@ -1,6 +1,7 @@
 mod services;
+mod api;
+mod dto;
 
-use subxt::{OnlineClient, PolkadotConfig};
 use subxt::utils::AccountId32;
 use crate::services::account_service::AccountService;
 
@@ -13,25 +14,12 @@ pub mod polkadot {}
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let service = AccountService::new().await?;
     let account: AccountId32 = ACCOUNT.parse()?;
-    let info = service.query_account(account).await?;
-
-    /*let api = OnlineClient::<PolkadotConfig>::from_url(ADDRESS).await?;
-
-
-    let storage_query = polkadot::storage().system().account(account);
-
-    let account_info = api
-        .storage()
-        .at_latest()
-        .await?
-        .fetch(&storage_query)
-        .await?
-        .expect("account entry not found");
+    let account_info = service.query_account(account).await?;
 
     let free = account_info.data.free;
     let reserved = account_info.data.reserved;
 
-    println!("free={free}, reserved={reserved}");*/
+    println!("free={free}, reserved={reserved}");
 
     Ok(())
 }
