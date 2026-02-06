@@ -32,7 +32,7 @@ pub async fn account_query(
     State(state): State<AccountServiceState>,
     Path(address): Path<String>,
 ) -> Result<(StatusCode, Json<AccountDto>), ErrorResponse> {
-    let mut service = state.lock().await;
+    let service = state.lock().await;
     let addr = address.parse::<AccountId32>();
     let Ok(addr) = addr else {
         return Err((StatusCode::BAD_REQUEST, String::from("You provided an invalid account address")));

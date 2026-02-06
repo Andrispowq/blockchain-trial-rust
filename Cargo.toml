@@ -6,6 +6,9 @@ edition = "2024"
 [dependencies]
 subxt = "0.44.2"
 tokio = { version = "1.49.0", features = ["rt", "rt-multi-thread", "macros"] }
-utoipa = "5.4.0"
 serde = { version = "1.0.228", features = ["derive"] }
 axum = "0.8.8"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+utoipa = { version = "5.4.0", features = ["axum_extras", "chrono"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+tracing = "0.1.44"
