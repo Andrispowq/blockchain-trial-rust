@@ -1,7 +1,7 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use utoipa::ToSchema;
 use crate::dto::dto::DtoConvertible;
 use crate::polkadot::system::storage::types::account::Account;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccountDto {
@@ -9,7 +9,7 @@ pub struct AccountDto {
     consumers: u32,
     providers: u32,
     sufficients: u32,
-    data: AccountDtoData
+    data: AccountDtoData,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -17,7 +17,7 @@ pub struct AccountDtoData {
     free: u128,
     reserved: u128,
     frozen: u128,
-    extra: u128
+    extra: u128,
 }
 
 impl DtoConvertible<AccountDto> for Account {
@@ -32,7 +32,7 @@ impl DtoConvertible<AccountDto> for Account {
                 reserved: self.data.reserved,
                 frozen: self.data.frozen,
                 extra: self.data.flags.0,
-            }
+            },
         }
     }
 }

@@ -1,18 +1,21 @@
-mod services;
 mod api;
 mod dto;
+mod services;
 
-use std::sync::Arc;
+use crate::api::ApiDoc;
+use crate::api::accounts::{AccountRateLimiter, AccountServiceState, AccountsState, account_query};
+use crate::services::account_service::AccountService;
 use axum::Router;
-use axum::routing::{get};
+use axum::routing::get;
+use governor::Quota;
+use std::num::NonZeroU32;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use crate::api::accounts::{account_query, AccountServiceState};
-use crate::api::ApiDoc;
-use crate::services::account_service::AccountService;
 
-const ACCOUNT: &str = "14s3KFN3AHnQ8xji3cd7BEMzF4ciipNRv3azgQwjFrf5seaW";
+const DEFAULT_ACCOUNT_RATE_LIMIT_PER_MINUTE: u32 = 3;
+const ACCOUNT_RATE_LIMIT_ENV: &str = "ACCOUNT_RATE_LIMIT_PER_MINUTE";
 
 #[subxt::subxt(runtime_metadata_path = "metadata.scale")]
 pub mod polkadot {}
@@ -23,10 +26,19 @@ async fn main() {
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    let service = AccountService::new().await
+    let service = AccountService::new()
+        .await
         .expect("Failed to create the account service");
 
-    let state: AccountServiceState = Arc::new(Mutex::new(service));
+    let service_state: AccountServiceState = Arc::new(Mutex::new(service));
+
+    let account_rate_limit = account_rate_limit_per_minute();
+    tracing::info!("rate limiting /accounts endpoint to {account_rate_limit} requests per minute");
+    let quota = Quota::per_minute(
+        NonZeroU32::new(account_rate_limit).expect("account rate limit must be greater than zero"),
+    );
+    let limiter = Arc::new(AccountRateLimiter::direct(quota));
+    let state = AccountsState::new(service_state, limiter);
 
     let app = Router::new()
         .route("/accounts/{address}", get(account_query))
@@ -39,4 +51,12 @@ async fn main() {
     tracing::info!("listening on {}", listener.local_addr().unwrap());
 
     axum::serve(listener, app).await.expect("server failed");
+}
+
+fn account_rate_limit_per_minute() -> u32 {
+    std::env::var(ACCOUNT_RATE_LIMIT_ENV)
+        .ok()
+        .and_then(|value| value.parse::<u32>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(DEFAULT_ACCOUNT_RATE_LIMIT_PER_MINUTE)
 }
